@@ -34,6 +34,16 @@
 #include <sys/wait.h>
 #include <sys/types.h>
 
+/* This enables tracing of the executed CG and CFG edges when set to 1.
+   In some cases, the CG and CFGs are that LLVM produces are incomplete
+   due to register-indirect jumps or calls.
+   To add edges use script/add_edges.py.
+   Don't forget to set environment variable AFLGO_PROFILER_FILE.
+   
+   $ export AFLGO_PROFILER_FILE=<your-file> */
+   
+//#define AFLGO_TRACING
+
 #ifdef AFLGO_TRACING
 #include "../hash.h"
 #include "../hashset.h"

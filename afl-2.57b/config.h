@@ -26,6 +26,12 @@
 
 #include "types.h"
 
+#if AFLGO_IMPL
+
+#define MAX_FACTOR 32
+
+#endif // AFLGO_IMPL
+
 /* Version string: */
 
 #define VERSION             "2.57b"

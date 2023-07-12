@@ -178,7 +178,12 @@ static void setup_shm(void) {
 
   u8* shm_str;
 
+#if AFLGO_IMPL
+  // Allocate 16 more bytes (used by afl-fuzz distances)
+  shm_id = shmget(IPC_PRIVATE, MAP_SIZE + 16, IPC_CREAT | IPC_EXCL | 0600);
+#else
   shm_id = shmget(IPC_PRIVATE, MAP_SIZE, IPC_CREAT | IPC_EXCL | 0600);
+#endif // AFLGO_IMPL
 
   if (shm_id < 0) PFATAL("shmget() failed");
 
@@ -984,7 +989,11 @@ int main(int argc, char** argv) {
 
   doc_path = access(DOC_PATH, F_OK) ? "docs" : DOC_PATH;
 
+#if AFLGO_IMPL
+  SAYF(cCYA "aflgo (yeah!) " cBRI VERSION cRST "\n");
+#else
   SAYF(cCYA "afl-tmin " cBRI VERSION cRST " by <lcamtuf@google.com>\n");
+#endif // AFLGO_IMPL
 
   while ((opt = getopt(argc,argv,"+i:o:f:m:t:B:xeQ")) > 0)
 
