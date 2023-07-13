@@ -1,5 +1,6 @@
 #!/bin/bash
-set -e # exit on error
+
+set -euo pipefail # exit on error
 
 # Build clang & LLVM
 LLVM_DEP_PACKAGES="build-essential make cmake ninja-build git binutils-gold binutils-dev curl wget"
@@ -65,12 +66,23 @@ apt install -y python-dev python3 python3-dev python3-pip autoconf automake libt
 python3 -m pip install --upgrade pip
 python3 -m pip install networkx pydot pydotplus
 
-export CXX=clang++
-export CC=clang
-# build AFLGo
-git clone https://github.com/aflgo/aflgo.git
-cd aflgo
+export CXX=/usr/bin/clang++
+export CC=/usr/bin/clang
+export LLVM_CONFIG=/usr/bin/llvm-config
+
+pushd afl-2.57b
 make clean all
-pushd llvm_mode; make clean all; popd
-pushd distance_calculator; cmake -G Ninja ./; cmake --build ./; popd
-export AFLGO=`pwd`/aflgo
+popd
+
+pushd afl-2.57b/llvm_mode
+make clean all
+popd
+
+pushd instrument
+make clean all
+popd
+
+pushd distance/distance_calculator
+cmake ./
+cmake --build ./
+popd

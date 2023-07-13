@@ -1,4 +1,7 @@
 #!/bin/bash
+
+set -euo pipefail
+
 if [ $# -lt 2 ]; then
   echo "Usage: $0 <binaries-directory> <temporary-directory> [fuzzer-name]"
   echo ""
