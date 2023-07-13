@@ -18,151 +18,163 @@ The easiest way to use AFLGo is as patch testing tool in OSS-Fuzz. Here is our i
 # Environment Variables
 * **AFLGO_INST_RATIO** -- The proportion of basic blocks instrumented with distance values (default: 100).
 * **AFLGO_SELECTIVE** -- Add AFL-trampoline only to basic blocks with distance values? (default: off).
-* **AFLGO_PROFILER_FILE** -- When CFG-tracing is enabled, the data will be stored here.
+* **AFLGO_PROFILER_FILE** -- When CFG-tracing is enabled, the data will be stored here. (See `instrument/README.md`)
 
 # How to instrument a Binary with AFLGo
-1) Install <a href="https://llvm.org/docs/CMake.html" target="_blank">LLVM</a> **11.0.0** with <a href="http://llvm.org/docs/GoldPlugin.html" target="_blank">Gold</a>-plugin. You can also follow <a href="https://github.com/aflgo/oss-fuzz/blob/master/infra/base-images/base-clang/checkout_build_install_llvm.sh" target="_blank">these</a> instructions or run [AFLGo building script](./scripts/build/aflgo-build.sh).
+
+1) Install <a href="https://llvm.org/docs/CMake.html" target="_blank">LLVM</a> **11.0.0** with <a href="http://llvm.org/docs/GoldPlugin.html" target="_blank">Gold</a>-plugin. You can also follow <a href="https://github.com/aflgo/oss-fuzz/blob/master/infra/base-images/base-clang/checkout_build_install_llvm.sh" target="_blank">these</a> instructions. Make sure that the following commands successfully executed:
+   ```bash
+   # Install LLVMgold into bfd-plugins
+   mkdir /usr/lib/bfd-plugins
+   cp /usr/local/lib/libLTO.so /usr/lib/bfd-plugins
+   cp /usr/local/lib/LLVMgold.so /usr/lib/bfd-plugins
+   ```
+
 2) Install other prerequisite
-```bash
-sudo apt-get update
-sudo apt-get install python3
-sudo apt-get install python3-dev
-sudo apt-get install python3-pip
-sudo apt-get install libboost-all-dev  # boost is not required if you use genDistance.sh in step 7
-sudo pip3 install --upgrade pip
-sudo pip3 install networkx
-sudo pip3 install pydot
-sudo pip3 install pydotplus
-```
+   ```bash
+   sudo apt-get update
+   sudo apt-get install python3
+   sudo apt-get install python3-dev
+   sudo apt-get install python3-pip
+   sudo apt-get install libboost-all-dev  # boost is not required if you use gen_distance_orig.sh in step 7
+   sudo pip3 install --upgrade pip
+   sudo pip3 install networkx
+   sudo pip3 install pydot
+   sudo pip3 install pydotplus
+   ```
+
 3) Compile AFLGo fuzzer, LLVM-instrumentation pass and the distance calculator
-```bash
-# Checkout source code
-git clone https://github.com/aflgo/aflgo.git
-export AFLGO=$PWD/aflgo
+   ```bash
+   export CXX=/usr/bin/clang++
+   export CC=/usr/bin/clang
+   export LLVM_CONFIG=/usr/bin/llvm-config
 
-# Compile source code
-pushd $AFLGO
-make clean all 
-cd llvm_mode
-make clean all
-cd ..
-cd distance_calculator/
-cmake -G Ninja ./
-cmake --build ./
-popd
-```
-4) Download subject (e.g., <a href="http://xmlsoft.org/" target="_blank">libxml2</a>) or just run [libxml2 fuzzing script](./scripts/fuzz/libxml2-ef709ce2.sh).
-```bash
-# Clone subject repository
-git clone https://gitlab.gnome.org/GNOME/libxml2
-export SUBJECT=$PWD/libxml2
-```
-5) Set targets (e.g., changed statements in commit <a href="https://git.gnome.org/browse/libxml2/commit/?id=ef709ce2" target="_blank">ef709ce2</a>). Writes BBtargets.txt.
-```bash
-# Setup directory containing all temporary files
-mkdir temp
-export TMP_DIR=$PWD/temp
+   pushd afl-2.57b; make clean all; popd;
+   pushd afl-2.57b/llvm_mode; make clean all; popd;
+   pushd instrument; make clean all; popd;
+   pushd distance/distance_calculator; cmake ./; cmake --build ./; popd;
+   ```
+   **Note**:
+    - You can run [AFLGo building script](./build.sh) to do everything for you instead of manually go through all before.
+    - From now on, we are going to take <a href="http://xmlsoft.org/" target="_blank">libxml2</a> as an example. You can also equivalently run [libxml2 fuzzing script](./scripts/fuzz/libxml2-ef709ce2.sh) instead.
 
-# Download commit-analysis tool
-wget https://raw.githubusercontent.com/jay/showlinenum/develop/showlinenum.awk
-chmod +x showlinenum.awk
-mv showlinenum.awk $TMP_DIR
+4) Download subject <a href="http://xmlsoft.org/" target="_blank">libxml2</a>.
+   ```bash
+   # Clone subject repository
+   git clone https://gitlab.gnome.org/GNOME/libxml2
+   export SUBJECT=$PWD/libxml2
+   ```
 
-# Generate BBtargets from commit ef709ce2
-pushd $SUBJECT
-  git checkout ef709ce2
-  git diff -U0 HEAD^ HEAD > $TMP_DIR/commit.diff
-popd
-cat $TMP_DIR/commit.diff |  $TMP_DIR/showlinenum.awk show_header=0 path=1 | grep -e "\.[ch]:[0-9]*:+" -e "\.cpp:[0-9]*:+" -e "\.cc:[0-9]*:+" | cut -d+ -f1 | rev | cut -c2- | rev > $TMP_DIR/BBtargets.txt
+5) Set targets (e.g., changed statements in commit <a href="https://git.gnome.org/browse/libxml2/commit/?id=ef709ce2" target="_blank">ef709ce2</a>). Writes `BBtargets.txt`.
+   ```bash
+   # Setup directory containing all temporary files
+   mkdir temp
+   export TMP_DIR=$PWD/temp
 
-# Print extracted targets. 
-echo "Targets:"
-cat $TMP_DIR/BBtargets.txt
-```
-6) **Note**: If there are no targets, there is nothing to instrument!
-7) Generate CG and intra-procedural CFGs from subject (i.e., libxml2).
-```bash
-# Set aflgo-instrumenter
-export CC=$AFLGO/afl-clang-fast
-export CXX=$AFLGO/afl-clang-fast++
+   # Download commit-analysis tool
+   wget https://raw.githubusercontent.com/jay/showlinenum/develop/showlinenum.awk
+   chmod +x showlinenum.awk
+   mv showlinenum.awk $TMP_DIR
 
-# Set aflgo-instrumentation flags
-export COPY_CFLAGS=$CFLAGS
-export COPY_CXXFLAGS=$CXXFLAGS
-export ADDITIONAL="-targets=$TMP_DIR/BBtargets.txt -outdir=$TMP_DIR -flto -fuse-ld=gold -Wl,-plugin-opt=save-temps"
-export CFLAGS="$CFLAGS $ADDITIONAL"
-export CXXFLAGS="$CXXFLAGS $ADDITIONAL"
+   # Generate BBtargets from commit ef709ce2
+   pushd $SUBJECT
+     git checkout ef709ce2
+     git diff -U0 HEAD^ HEAD > $TMP_DIR/commit.diff
+   popd
+   cat $TMP_DIR/commit.diff |  $TMP_DIR/showlinenum.awk show_header=0 path=1 | grep -e "\.[ch]:[0-9]*:+" -e "\.cpp:[0-9]*:+" -e "\.cc:[0-9]*:+" | cut -d+ -f1 | rev | cut -c2- | rev > $TMP_DIR/BBtargets.txt
 
-# Build libxml2 (in order to generate CG and CFGs).
-# Meanwhile go have a coffee ☕️
-export LDFLAGS=-lpthread
-pushd $SUBJECT
-  ./autogen.sh
-  ./configure --disable-shared
-  make clean
-  make xmllint
-popd
-# * If the linker (CCLD) complains that you should run ranlib, make
-#   sure that libLTO.so and LLVMgold.so (from building LLVM with Gold)
-#   can be found in /usr/lib/bfd-plugins
-# * If the compiler crashes, there is some problem with LLVM not 
-#   supporting our instrumentation (afl-llvm-pass.so.cc:540-577).
-#   LLVM has changed the instrumentation-API very often :(
-#   -> Check LLVM-version, fix problem, and prepare pull request.
-# * You can speed up the compilation with a parallel build. However,
-#   this may impact which BBs are identified as targets. 
-#   See https://github.com/aflgo/aflgo/issues/41.
+   # Print extracted targets. 
+   echo "Targets:"
+   cat $TMP_DIR/BBtargets.txt
+   ```
+   **Note**: If there are no targets, there is nothing to instrument!
 
+6) Generate CG and intra-procedural CFGs from the subject.
+   ```bash
+   # Set aflgo-instrumenter
+   export CC=$AFLGO/instrument/aflgo-clang
+   export CXX=$AFLGO/instrument/aflgo-clang++
+   
+   # Set aflgo-instrumentation flags
+   export COPY_CFLAGS=$CFLAGS
+   export COPY_CXXFLAGS=$CXXFLAGS
+   export ADDITIONAL="-targets=$TMP_DIR/BBtargets.txt -outdir=$TMP_DIR -flto -fuse-ld=gold -Wl,-plugin-opt=save-temps"
+   export CFLAGS="$CFLAGS $ADDITIONAL"
+   export CXXFLAGS="$CXXFLAGS $ADDITIONAL"
+   
+   # Build libxml2 (in order to generate CG and CFGs).
+   # Meanwhile go have a coffee ☕️
+   export LDFLAGS=-lpthread
+   pushd $SUBJECT
+     ./autogen.sh
+     ./configure --disable-shared
+     make clean
+     make xmllint
+   popd
+   ```
+   You can test whether CG/CFG extraction was successful with
+   ```bash
+   $SUBJECT/xmllint --valid --recover $SUBJECT/test/dtd3
+   ls $TMP_DIR/dot-files
+   echo "Function targets"
+   cat $TMP_DIR/Ftargets.txt
+   ```
+   **Note**:
+    - If the linker (CCLD) complains that you should run `ranlib`, make sure that `libLTO.so` and `LLVMgold.so` (from <u>Install LLVM 11.0.0 with Gold-plugin</u> in step 1) can be found in `/usr/lib/bfd-plugins`.
+    - If the compiler crashes, there is some problem with LLVM not supporting our instrumentation (*afl-llvm-pass.so.cc:540-577*). LLVM has changed the instrumentation-API very often :( You can check LLVM-version, fix problem, and prepare pull request.
+    - You can speed up the compilation with a parallel build. However, this may impact which BBs are identified as targets. See https://github.com/aflgo/aflgo/issues/41.
 
-# Test whether CG/CFG extraction was successful
-$SUBJECT/xmllint --valid --recover $SUBJECT/test/dtd3
-ls $TMP_DIR/dot-files
-echo "Function targets"
-cat $TMP_DIR/Ftargets.txt
+7) Generate distance file.
+   Firstly we need to clean up `BBnames.txt` and `BBcalls.txt`, otherwise `distance_calculator` may fail. This is necessary for any subjects, not only for *libxml2*.
+   ```bash
+   # Clean up
+   cat $TMP_DIR/BBnames.txt | grep -v "^$"| rev | cut -d: -f2- | rev | sort | uniq > $TMP_DIR/BBnames2.txt && mv $TMP_DIR/BBnames2.txt $TMP_DIR/BBnames.txt
+   
+   cat $TMP_DIR/BBcalls.txt | grep -Ev "^[^,]*$|^([^,]*,){2,}[^,]*$"| sort | uniq > $TMP_DIR/BBcalls2.txt && mv $TMP_DIR/BBcalls2.txt $TMP_DIR/BBcalls.txt
+   ```
+   Then start to generate (this may take a while):
+   ```bash
+   # Generate distance ☕️
+   # $AFLGO/distance/gen_distance_orig.sh is the original, but significantly slower, version
+   
+   $AFLGO/distance/gen_distance_fast.py $SUBJECT $TMP_DIR xmllint
+   ```
+   After that you can check the generated distance file with
+   ```bash
+   echo "Distance values:"
+   head -n5 $TMP_DIR/distance.cfg.txt
+   echo "..."
+   tail -n5 $TMP_DIR/distance.cfg.txt
+   ```
+   **Note**: If `distance.cfg.txt` is empty, there was some problem computing the CG-level and BB-level target distance. See `$TMP_DIR/step*.log`.
 
-# Clean up
-cat $TMP_DIR/BBnames.txt | grep -v "^$"| rev | cut -d: -f2- | rev | sort | uniq > $TMP_DIR/BBnames2.txt && mv $TMP_DIR/BBnames2.txt $TMP_DIR/BBnames.txt
-cat $TMP_DIR/BBcalls.txt | grep -Ev "^[^,]*$|^([^,]*,){2,}[^,]*$"| sort | uniq > $TMP_DIR/BBcalls2.txt && mv $TMP_DIR/BBcalls2.txt $TMP_DIR/BBcalls.txt
+8) Instrument the subject
+   ```bash
+   export CFLAGS="$COPY_CFLAGS -distance=$TMP_DIR/distance.cfg.txt"
+   export CXXFLAGS="$COPY_CXXFLAGS -distance=$TMP_DIR/distance.cfg.txt"
 
-# Generate distance ☕️
-# $AFLGO/scripts/genDistance.sh is the original, but significantly slower, version
-$AFLGO/scripts/gen_distance_fast.py $SUBJECT $TMP_DIR xmllint
-
-# Check distance file
-echo "Distance values:"
-head -n5 $TMP_DIR/distance.cfg.txt
-echo "..."
-tail -n5 $TMP_DIR/distance.cfg.txt
-```
-8) Note: If `distance.cfg.txt` is empty, there was some problem computing the CG-level and BB-level target distance. See `$TMP_DIR/step*`.
-9) Instrument subject (i.e., libxml2)
-```bash
-export CFLAGS="$COPY_CFLAGS -distance=$TMP_DIR/distance.cfg.txt"
-export CXXFLAGS="$COPY_CXXFLAGS -distance=$TMP_DIR/distance.cfg.txt"
-
-# Clean and build subject with distance instrumentation ☕️
-pushd $SUBJECT
-  make clean
-  ./configure --disable-shared
-  make xmllint
-popd
-```
-
-If your compilation crashes in this step, have a look at Issue [#4](https://github.com/aflgo/aflgo/issues/4#issuecomment-333947041).
+   # Clean and build subject with distance instrumentation ☕️
+   pushd $SUBJECT
+     make clean
+     ./configure --disable-shared
+     make xmllint
+   popd
+   ```
+   If your compilation crashes in this step, have a look at Issue [#4](https://github.com/aflgo/aflgo/issues/4#issuecomment-333947041).
 
 # How to fuzz the instrumented binary
-* We set the exponential annealing-based power schedule (-z exp).
-* We set the time-to-exploitation to 45min (-c 45m), assuming the fuzzer is run for about an hour.
+* We set the exponential annealing-based power schedule (`-z exp`).
+* We set the time-to-exploitation to 45min (`-c 45m`), assuming the fuzzer is run for about an hour.
 ```bash
 # Construct seed corpus
 mkdir in
 cp -r $SUBJECT/test/dtd* in
 cp $SUBJECT/test/dtds/* in
 
-$AFLGO/afl-fuzz -S ef709ce2 -z exp -c 45m -i in -o out $SUBJECT/xmllint --valid --recover @@
+$AFLGO/afl-2.57b/afl-fuzz -S ef709ce2 -z exp -c 45m -i in -o out $SUBJECT/xmllint --valid --recover @@
 ```
 * **Tipp**: Concurrently fuzz the most recent version as master with classical AFL :)
 ```bash
 $AFL/afl-fuzz -M master -i in -o out $MASTER/xmllint --valid --recover @@
 ```
-* Run more [fuzzing scripts](./scripts/fuzz) of various real programs like Binutils, jasper, lrzip, libming and DARPA CGC. 
+* Run more [fuzzing scripts](./examples) of various real programs like Binutils, jasper, lrzip, libming and DARPA CGC. 

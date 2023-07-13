@@ -2,7 +2,10 @@
 
 set -euo pipefail # exit on error
 
-# Build clang & LLVM
+##########################
+### Build clang & LLVM ###
+##########################
+
 LLVM_DEP_PACKAGES="build-essential make cmake ninja-build git binutils-gold binutils-dev curl wget"
 apt-get install -y $LLVM_DEP_PACKAGES
 
@@ -54,17 +57,27 @@ cmake -G "Ninja" \
        ~/build/llvm_tools/llvm-11.0.0.src
 ninja cxx; ninja install-cxx
 
-# Install LLVMgold in bfd-plugins
+#######################################
+### Install LLVMgold in bfd-plugins ###
+#######################################
+
 mkdir -p /usr/lib/bfd-plugins
 cp /usr/local/lib/libLTO.so /usr/lib/bfd-plugins
 cp /usr/local/lib/LLVMgold.so /usr/lib/bfd-plugins
 
-# install some packages
+#############################
+### Install some packages ###
+#############################
+
 export LC_ALL=C
 apt-get update
 apt install -y python-dev python3 python3-dev python3-pip autoconf automake libtool-bin python-bs4 libboost-all-dev # libclang-11.0-dev
 python3 -m pip install --upgrade pip
 python3 -m pip install networkx pydot pydotplus
+
+##############################
+### Build AFLGo components ###
+##############################
 
 export CXX=/usr/bin/clang++
 export CC=/usr/bin/clang
