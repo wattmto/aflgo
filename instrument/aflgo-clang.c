@@ -1,13 +1,6 @@
 /*
-   american fuzzy lop - LLVM-mode wrapper for clang
-   ------------------------------------------------
-
-   Written by Laszlo Szekeres <lszekeres@google.com> and
-              Michal Zalewski <lcamtuf@google.com>
-
-   LLVM integration design comes from Laszlo Szekeres.
-
-   Copyright 2015, 2016 Google Inc. All rights reserved.
+   aflgo compiler
+   --------------
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -15,18 +8,14 @@
 
      http://www.apache.org/licenses/LICENSE-2.0
 
-   This program is a drop-in replacement for clang, similar in most respects
-   to ../afl-gcc. It tries to figure out compilation mode, adds a bunch
-   of flags, and then calls the real compiler.
-
  */
 
 #define AFL_MAIN
 
-#include "../config.h"
-#include "../types.h"
-#include "../debug.h"
-#include "../alloc-inl.h"
+#include "../afl-2.57b/config.h"
+#include "../afl-2.57b/types.h"
+#include "../afl-2.57b/debug.h"
+#include "../afl-2.57b/alloc-inl.h"
 
 #include <stdio.h>
 #include <unistd.h>
@@ -42,12 +31,12 @@ static u32  cc_par_cnt = 1;         /* Param count, including argv0      */
 
 static void find_obj(u8* argv0) {
 
-  u8 *afl_path = getenv("AFL_PATH");
+  u8 *afl_path = getenv("AFLGO");
   u8 *slash, *tmp;
 
   if (afl_path) {
 
-    tmp = alloc_printf("%s/afl-llvm-rt.o", afl_path);
+    tmp = alloc_printf("%s/instrument/aflgo-runtime.o", afl_path);
 
     if (!access(tmp, R_OK)) {
       obj_path = afl_path;
@@ -69,7 +58,7 @@ static void find_obj(u8* argv0) {
     dir = ck_strdup(argv0);
     *slash = '/';
 
-    tmp = alloc_printf("%s/afl-llvm-rt.o", dir);
+    tmp = alloc_printf("%s/instrument/aflgo-runtime.o", dir);
 
     if (!access(tmp, R_OK)) {
       obj_path = dir;
@@ -82,12 +71,7 @@ static void find_obj(u8* argv0) {
 
   }
 
-  if (!access(AFL_PATH "/afl-llvm-rt.o", R_OK)) {
-    obj_path = AFL_PATH;
-    return;
-  }
-
-  FATAL("Unable to find 'afl-llvm-rt.o' or 'afl-llvm-pass.so'. Please set AFL_PATH");
+  FATAL("Unable to find 'aflgo-runtime.o' or 'aflgo-pass.so'.");
  
 }
 
@@ -104,7 +88,9 @@ static void edit_params(u32 argc, char** argv) {
   name = strrchr(argv[0], '/');
   if (!name) name = argv[0]; else name++;
 
-  if (!strcmp(name, "afl-clang-fast++")) {
+  if (!strcmp(name, "afl-clang-fast++") ||
+      !strcmp(name, "aflgo-clang++"))
+  {
     u8* alt_cxx = getenv("AFL_CXX");
     cc_params[0] = alt_cxx ? alt_cxx : (u8*)"clang++";
   } else {
@@ -123,12 +109,12 @@ static void edit_params(u32 argc, char** argv) {
   cc_params[cc_par_cnt++] = "-fsanitize-coverage=trace-pc-guard";
   cc_params[cc_par_cnt++] = "-mllvm";
   cc_params[cc_par_cnt++] = "-sanitizer-coverage-block-threshold=0";
-  WARNF("Disabling AFLGO features..\n");
+#  error AFLGO has not supported trace-pc-guard yet
 #else
   cc_params[cc_par_cnt++] = "-Xclang";
   cc_params[cc_par_cnt++] = "-load";
   cc_params[cc_par_cnt++] = "-Xclang";
-  cc_params[cc_par_cnt++] = alloc_printf("%s/afl-llvm-pass.so", obj_path);
+  cc_params[cc_par_cnt++] = alloc_printf("%s/aflgo-pass.so", obj_path);
 #endif /* ^USE_TRACE_PC */
 
   cc_params[cc_par_cnt++] = "-Qunused-arguments";
@@ -287,11 +273,11 @@ static void edit_params(u32 argc, char** argv) {
     switch (bit_mode) {
 
       case 0:
-        cc_params[cc_par_cnt++] = alloc_printf("%s/afl-llvm-rt.o", obj_path);
+        cc_params[cc_par_cnt++] = alloc_printf("%s/aflgo-runtime.o", obj_path);
         break;
 
       case 32:
-        cc_params[cc_par_cnt++] = alloc_printf("%s/afl-llvm-rt-32.o", obj_path);
+        cc_params[cc_par_cnt++] = alloc_printf("%s/aflgo-runtime-32.o", obj_path);
 
         if (access(cc_params[cc_par_cnt - 1], R_OK))
           FATAL("-m32 is not supported by your compiler");
@@ -299,7 +285,7 @@ static void edit_params(u32 argc, char** argv) {
         break;
 
       case 64:
-        cc_params[cc_par_cnt++] = alloc_printf("%s/afl-llvm-rt-64.o", obj_path);
+        cc_params[cc_par_cnt++] = alloc_printf("%s/aflgo-runtime-64.o", obj_path);
 
         if (access(cc_params[cc_par_cnt - 1], R_OK))
           FATAL("-m64 is not supported by your compiler");
@@ -332,19 +318,18 @@ int main(int argc, char** argv) {
   if (argc < 2) {
 
     SAYF("\n"
-         "This is a helper application for afl-fuzz. It serves as a drop-in replacement\n"
+         "This is a helper application for aflgo. It serves as a drop-in replacement\n"
          "for clang, letting you recompile third-party code with the required runtime\n"
          "instrumentation. A common use pattern would be one of the following:\n\n"
 
-         "  CC=%s/afl-clang-fast ./configure\n"
-         "  CXX=%s/afl-clang-fast++ ./configure\n\n"
+         "  CC=aflgo-clang ./configure\n"
+         "  CXX=aflgo-clang++ ./configure\n\n"
 
          "In contrast to the traditional afl-clang tool, this version is implemented as\n"
          "an LLVM pass and tends to offer improved performance with slow programs.\n\n"
 
          "You can specify custom next-stage toolchain via AFL_CC and AFL_CXX. Setting\n"
-         "AFL_HARDEN enables hardening optimizations in the compiled code.\n\n",
-         BIN_PATH, BIN_PATH);
+         "AFL_HARDEN enables hardening optimizations in the compiled code.\n\n");
 
     exit(1);
 

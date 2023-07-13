@@ -1,12 +1,6 @@
 /*
-   american fuzzy lop - LLVM-mode instrumentation pass
-   ---------------------------------------------------
-
-   Written by Laszlo Szekeres <lszekeres@google.com> and
-              Michal Zalewski <lcamtuf@google.com>
-
-   LLVM integration design comes from Laszlo Szekeres. C bits copied-and-pasted
-   from afl-as.c are Michal's fault.
+   aflgo - LLVM instrumentation pass
+   ---------------------------------
 
    Copyright 2015, 2016 Google Inc. All rights reserved.
 
@@ -16,16 +10,12 @@
 
      http://www.apache.org/licenses/LICENSE-2.0
 
-   This library is plugged into LLVM when invoking clang through afl-clang-fast.
-   It tells the compiler to add code roughly equivalent to the bits discussed
-   in ../afl-as.h.
-
  */
 
 #define AFL_LLVM_PASS
 
-#include "../config.h"
-#include "../debug.h"
+#include "../afl-2.57b/config.h"
+#include "../afl-2.57b/debug.h"
 
 #include <stdio.h>
 #include <stdlib.h>

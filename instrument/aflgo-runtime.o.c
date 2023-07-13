@@ -1,11 +1,6 @@
 /*
-   american fuzzy lop - LLVM instrumentation bootstrap
-   ---------------------------------------------------
-
-   Written by Laszlo Szekeres <lszekeres@google.com> and
-              Michal Zalewski <lcamtuf@google.com>
-
-   LLVM integration design comes from Laszlo Szekeres.
+   aflgo - LLVM instrumentation bootstrap
+   --------------------------------------
 
    Copyright 2015, 2016 Google Inc. All rights reserved.
 
@@ -14,8 +9,6 @@
    You may obtain a copy of the License at:
 
      http://www.apache.org/licenses/LICENSE-2.0
-
-   This code is the rewrite of afl-as.h's main_payload.
 
 */
 
@@ -41,7 +34,7 @@
    Don't forget to set environment variable AFLGO_PROFILER_FILE.
    
    $ export AFLGO_PROFILER_FILE=<your-file> */
-   
+
 //#define AFLGO_TRACING
 
 #ifdef AFLGO_TRACING
