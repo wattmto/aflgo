@@ -7,7 +7,7 @@ fi
 
 BINARIES=$(readlink -e $1)
 TMPDIR=$(readlink -e $2)
-AFLGO="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+AFLGO="$( cd "$( dirname "${BASH_SOURCE[0]}" )/../" && pwd )"
 fuzzer=""
 if [ $# -eq 3 ]; then
   fuzzer=$(find $BINARIES -name "$3.0.0.*.bc" | rev | cut -d. -f5- | rev)
@@ -72,7 +72,7 @@ if [ $RESUME -le $STEP ]; then
     done
 
     #Integrate several call graphs into one
-    $AFLGO/merge_callgraphs.py -o callgraph.dot $(ls callgraph.*)
+    $AFLGO/distance/distance_calculator/merge_callgraphs.py -o callgraph.dot $(ls callgraph.*)
     echo "($STEP) Integrating several call graphs into one."
 
   else
@@ -97,7 +97,7 @@ next_step
 if [ $RESUME -le $STEP ]; then
   echo "($STEP) Computing distance for call graph .."
 
-  $AFLGO/distance.py -d $TMPDIR/dot-files/callgraph.dot -t $TMPDIR/Ftargets.txt -n $TMPDIR/Fnames.txt -o $TMPDIR/distance.callgraph.txt > $TMPDIR/step${STEP}.log 2>&1 || FAIL=1
+  $AFLGO/distance/distance_calculator/distance.py -d $TMPDIR/dot-files/callgraph.dot -t $TMPDIR/Ftargets.txt -n $TMPDIR/Fnames.txt -o $TMPDIR/distance.callgraph.txt > $TMPDIR/step${STEP}.log 2>&1 || FAIL=1
 
   if [ $(cat $TMPDIR/distance.callgraph.txt | wc -l) -eq 0 ]; then
     FAIL=1
@@ -123,7 +123,7 @@ if [ $RESUME -le $STEP ]; then
 
     #Compute distance
     printf "\nComputing distance for $f..\n"
-    $AFLGO/distance.py -d $f -t $TMPDIR/BBtargets.txt -n $TMPDIR/BBnames.txt -s $TMPDIR/BBcalls.txt -c $TMPDIR/distance.callgraph.txt -o ${f}.distances.txt >> $TMPDIR/step${STEP}.log 2>&1 #|| FAIL=1
+    $AFLGO/distance/distance_calculator/distance.py -d $f -t $TMPDIR/BBtargets.txt -n $TMPDIR/BBnames.txt -s $TMPDIR/BBcalls.txt -c $TMPDIR/distance.callgraph.txt -o ${f}.distances.txt >> $TMPDIR/step${STEP}.log 2>&1 #|| FAIL=1
     if [ $? -ne 0 ]; then
       echo -e "\e[93;1m[!]\e[0m Could not calculate distance for $f."
     fi
@@ -142,8 +142,8 @@ echo ""
 echo "----------[DONE]----------"
 echo ""
 echo "Now, you may wish to compile your sources with "
-echo "CC=\"$AFLGO/../afl-clang-fast\""
-echo "CXX=\"$AFLGO/../afl-clang-fast++\""
+echo "CC=\"$AFLGO/instrument/aflgo-clang\""
+echo "CXX=\"$AFLGO/instrument/aflgo-clang++\""
 echo "CFLAGS=\"\$CFLAGS -distance=$(readlink -e $TMPDIR/distance.cfg.txt)\""
 echo "CXXFLAGS=\"\$CXXFLAGS -distance=$(readlink -e $TMPDIR/distance.cfg.txt)\""
 echo ""

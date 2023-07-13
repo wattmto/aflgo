@@ -1,6 +1,5 @@
 /**
- * This is a C++ port of distance.py from
- * https://github.com/aflgo/aflgo/blob/master/scripts/distance.py
+ * This is a C++ port of ./distance.py
  *
  * Loris Reiff <loris.reiff@liblor.ch>
  */

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Construct CG and calculate distances, similarly to genDistance.sh.
+Construct CG and calculate distances, similarly to gen_distance_orig.sh.
 The distance is parallelized and uses the compiled distance calculation
-version by default.
+version by default, so that it's much faster.
 """
 import argparse
 import multiprocessing as mp
@@ -18,8 +18,8 @@ STATE_FN = "state-fast"
 DOT_DIR_NAME = "dot-files"
 CALLGRAPH_NAME = "callgraph.dot"
 PROJ_ROOT = Path(__file__).resolve().parent.parent
-DIST_BIN = PROJ_ROOT / "distance_calculator/distance_calculator"
-DIST_PY = PROJ_ROOT / "scripts/distance.py"
+DIST_BIN = PROJ_ROOT / "distance/distance_calculator/distance.bin"
+DIST_PY  = PROJ_ROOT / "distance/distance_calculator/distance.py"
 
 
 def next_step(args):
@@ -232,8 +232,8 @@ def done(args):
 ----------[DONE]----------
 
 Now, you may wish to compile your sources with
-CC=\"{PROJ_ROOT}/afl-clang-fast\"
-CXX=\"{PROJ_ROOT}/afl-clang-fast++\"
+CC=\"{PROJ_ROOT}/instrument/aflgo-clang\"
+CXX=\"{PROJ_ROOT}/instrument/aflgo-clang++\"
 CFLAGS=\"$CFLAGS -distance=$(readlink -e $TMPDIR/distance.cfg.txt)\"
 CXXFLAGS=\"$CXXFLAGS -distance=$(readlink -e $TMPDIR/distance.cfg.txt)\"
 
