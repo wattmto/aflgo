@@ -1,7 +1,5 @@
 #!/bin/bash
 
-set -euo pipefail
-
 if [ $# -lt 2 ]; then
   echo "Usage: $0 <binaries-directory> <temporary-directory> [fuzzer-name]"
   echo ""
@@ -13,7 +11,7 @@ TMPDIR=$(readlink -e $2)
 AFLGO="$( cd "$( dirname "${BASH_SOURCE[0]}" )/../" && pwd )"
 fuzzer=""
 if [ $# -eq 3 ]; then
-  fuzzer=$(find $BINARIES -name "$3.0.0.*.bc" | rev | cut -d. -f5- | rev)
+  fuzzer=$(find $BINARIES -maxdepth 1 -name "$3.0.0.*.bc" | rev | cut -d. -f5- | rev)
   if [ $(echo "$fuzzer" | wc -l) -ne 1 ]; then
     echo "Couldn't find bytecode for fuzzer $3 in folder $BINARIES."
     exit 1
@@ -28,7 +26,7 @@ if [ -z "$BINARIES" ]; then echo "Couldn't find binaries folder ($1)."; exit 1; 
 if ! [ -d "$BINARIES" ]; then echo "No directory: $BINARIES."; exit 1; fi
 if [ -z "$TMPDIR" ]; then echo "Couldn't find temporary directory ($3)."; exit 1; fi
 
-binaries=$(find $BINARIES -name "*.0.0.*.bc" | rev | cut -d. -f5- | rev)
+binaries=$(find $BINARIES -maxdepth 1 -name "*.0.0.*.bc" | rev | cut -d. -f5- | rev)
 if [ -z "$binaries" ]; then echo "Couldn't find any binaries in folder $BINARIES."; exit; fi
 
 if [ -z $(which python) ] && [ -z $(which python3) ]; then echo "Please install Python"; exit 1; fi

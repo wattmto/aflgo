@@ -18,5 +18,5 @@ find_package(Boost
 
 set(CMAKE_CXX_STANDARD 14)
 
-add_executable(distance.bin distance.bin.cpp)
+add_executable(distance.bin distance.bin.cc)
 target_link_libraries(distance.bin ${Boost_LIBRARIES})

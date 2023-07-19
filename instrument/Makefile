@@ -81,7 +81,7 @@ aflgo-runtime-64.o: aflgo-runtime.o.c | test_deps
 
 test_build: $(PROGS)
 	@echo "[*] Testing the CC wrapper and instrumentation output..."
-	unset AFL_USE_ASAN AFL_USE_MSAN AFL_INST_RATIO; AFL_QUIET=1 AFL_PATH=. AFL_CC=$(CC) aflgo-clang $(CFLAGS) test-instr.c -o test-instr $(LDFLAGS)
+	unset AFL_USE_ASAN AFL_USE_MSAN AFL_INST_RATIO; AFL_QUIET=1 AFL_CC=$(CC) ./aflgo-clang $(CFLAGS) ./test-instr.c -o test-instr $(LDFLAGS)
 # Use /dev/null to avoid problems with optimization messing up expected
 # branches. See https://github.com/google/AFL/issues/30.
 	../afl-2.57b/afl-showmap -m none -q -o .test-instr0 ./test-instr < /dev/null

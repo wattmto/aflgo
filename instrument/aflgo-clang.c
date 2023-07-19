@@ -39,7 +39,7 @@ static void find_obj(u8* argv0) {
     tmp = alloc_printf("%s/instrument/aflgo-runtime.o", afl_path);
 
     if (!access(tmp, R_OK)) {
-      obj_path = afl_path;
+      obj_path = alloc_printf("%s/instrument", afl_path);
       ck_free(tmp);
       return;
     }
@@ -58,7 +58,7 @@ static void find_obj(u8* argv0) {
     dir = ck_strdup(argv0);
     *slash = '/';
 
-    tmp = alloc_printf("%s/instrument/aflgo-runtime.o", dir);
+    tmp = alloc_printf("%s/aflgo-runtime.o", dir);
 
     if (!access(tmp, R_OK)) {
       obj_path = dir;

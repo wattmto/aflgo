@@ -38,7 +38,7 @@ The easiest way to use AFLGo is as patch testing tool in OSS-Fuzz. Here is our i
    sudo apt-get install python3-pip
    sudo apt-get install libboost-all-dev  # boost is not required if you use gen_distance_orig.sh in step 7
    sudo pip3 install --upgrade pip
-   sudo pip3 install networkx
+   sudo pip3 install "networkx<3.0"
    sudo pip3 install pydot
    sudo pip3 install pydotplus
    ```
@@ -165,6 +165,8 @@ The easiest way to use AFLGo is as patch testing tool in OSS-Fuzz. Here is our i
 # How to fuzz the instrumented binary
 * We set the exponential annealing-based power schedule (`-z exp`).
 * We set the time-to-exploitation to 45min (`-c 45m`), assuming the fuzzer is run for about an hour.
+
+(Still take the previous libxml2 as an example)
 ```bash
 # Construct seed corpus
 mkdir in
@@ -177,4 +179,4 @@ $AFLGO/afl-2.57b/afl-fuzz -S ef709ce2 -z exp -c 45m -i in -o out $SUBJECT/xmllin
 ```bash
 $AFL/afl-fuzz -M master -i in -o out $MASTER/xmllint --valid --recover @@
 ```
-* Run more [fuzzing scripts](./examples) of various real programs like Binutils, jasper, lrzip, libming and DARPA CGC. 
+* Run more [fuzzing scripts](./examples) of various real programs like *Binutils*, *jasper*, *lrzip*, *libming* and *DARPA CGC*. Those scripts haven't contained any dependencies installing steps yet. So it's recommended that see READMEs of those projects first to check their requirements.

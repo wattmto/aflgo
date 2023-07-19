@@ -73,7 +73,7 @@ export LC_ALL=C
 apt-get update
 apt install -y python-dev python3 python3-dev python3-pip autoconf automake libtool-bin python-bs4 libboost-all-dev # libclang-11.0-dev
 python3 -m pip install --upgrade pip
-python3 -m pip install networkx pydot pydotplus
+python3 -m pip install "networkx<3.0" pydot pydotplus
 
 ##############################
 ### Build AFLGo components ###
@@ -82,6 +82,8 @@ python3 -m pip install networkx pydot pydotplus
 export CXX=/usr/bin/clang++
 export CC=/usr/bin/clang
 export LLVM_CONFIG=/usr/bin/llvm-config
+
+cd $( dirname "${BASH_SOURCE[0]}" )
 
 pushd afl-2.57b
 make clean all

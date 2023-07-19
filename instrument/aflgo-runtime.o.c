@@ -12,8 +12,8 @@
 
 */
 
-#include "../config.h"
-#include "../types.h"
+#include "../afl-2.57b/config.h"
+#include "../afl-2.57b/types.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -38,8 +38,8 @@
 //#define AFLGO_TRACING
 
 #ifdef AFLGO_TRACING
-#include "../hash.h"
-#include "../hashset.h"
+#include "../afl-2.57b/hash.h"
+#include "hashset.h"
 #include <assert.h>
 
 /* Variables for profiling */

@@ -5,7 +5,7 @@ set -euo pipefail
 git clone https://git.code.sf.net/p/giflib/code giflib-bugs-74
 cd giflib-bugs-74; git checkout 72e31ff
 mkdir obj-aflgo; mkdir obj-aflgo/temp
-export SUBJECT=$PWD; export TMP_DIR=$PWD/obj-aflgo/temp
+export TMP_DIR=$PWD/obj-aflgo/temp
 export CC=$AFLGO/instrument/aflgo-clang; export CXX=$AFLGO/instrument/aflgo-clang++
 export LDFLAGS=-lpthread
 export ADDITIONAL="-targets=$TMP_DIR/BBtargets.txt -outdir=$TMP_DIR -flto -fuse-ld=gold -Wl,-plugin-opt=save-temps"
@@ -15,7 +15,7 @@ cd obj-aflgo; CFLAGS="$ADDITIONAL" CXXFLAGS="$ADDITIONAL" ../configure --disable
 make clean; make -j4
 cat $TMP_DIR/BBnames.txt | rev | cut -d: -f2- | rev | sort | uniq > $TMP_DIR/BBnames2.txt && mv $TMP_DIR/BBnames2.txt $TMP_DIR/BBnames.txt
 cat $TMP_DIR/BBcalls.txt | sort | uniq > $TMP_DIR/BBcalls2.txt && mv $TMP_DIR/BBcalls2.txt $TMP_DIR/BBcalls.txt
-$AFLGO/distance/gen_distance_orig.sh $SUBJECT $TMP_DIR gifsponge
+$AFLGO/distance/gen_distance_orig.sh $PWD/util $TMP_DIR gifsponge
 CFLAGS="-distance=$TMP_DIR/distance.cfg.txt" CXXFLAGS="-distance=$TMP_DIR/distance.cfg.txt" ../configure --disable-shared --prefix=`pwd`
 make clean; make -j4
 mkdir in; echo "GIF" > in/in
