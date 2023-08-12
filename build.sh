@@ -2,9 +2,11 @@
 
 set -euo pipefail # exit on error
 
-##########################
-### Build clang & LLVM ###
-##########################
+cd $( dirname "${BASH_SOURCE[0]}" ) # go to where build.sh is located
+
+######################################
+### Build and install clang & LLVM ###
+######################################
 
 LLVM_DEP_PACKAGES="build-essential make cmake ninja-build git binutils-gold binutils-dev curl wget"
 apt-get install -y $LLVM_DEP_PACKAGES
@@ -23,8 +25,12 @@ export CC=gcc
 unset CFLAGS
 unset CXXFLAGS
 
-mkdir ~/build; cd ~/build
-mkdir llvm_tools; cd llvm_tools
+pushd instrument
+
+mkdir -p llvm_tools
+
+pushd llvm_tools
+
 wget https://github.com/llvm/llvm-project/releases/download/llvmorg-11.0.0/llvm-11.0.0.src.tar.xz
 wget https://github.com/llvm/llvm-project/releases/download/llvmorg-11.0.0/clang-11.0.0.src.tar.xz
 wget https://github.com/llvm/llvm-project/releases/download/llvmorg-11.0.0/compiler-rt-11.0.0.src.tar.xz
@@ -40,15 +46,22 @@ mv compiler-rt-11.0.0.src ~/build/llvm_tools/llvm-11.0.0.src/projects/compiler-r
 mv libcxx-11.0.0.src ~/build/llvm_tools/llvm-11.0.0.src/projects/libcxx
 mv libcxxabi-11.0.0.src ~/build/llvm_tools/llvm-11.0.0.src/projects/libcxxabi
 
-mkdir -p build-llvm/llvm; cd build-llvm/llvm
+mkdir -p build-llvm/llvm
+
+pushd build-llvm/llvm
+
 cmake -G "Ninja" \
       -DLIBCXX_ENABLE_SHARED=OFF -DLIBCXX_ENABLE_STATIC_ABI_LIBRARY=ON \
       -DCMAKE_BUILD_TYPE=Release -DLLVM_TARGETS_TO_BUILD="X86" \
       -DLLVM_BINUTILS_INCDIR=/usr/include ~/build/llvm_tools/llvm-11.0.0.src
 ninja; ninja install
 
-cd ~/build/llvm_tools
-mkdir -p build-llvm/msan; cd build-llvm/msan
+popd # go to llvm_tools
+
+mkdir -p build-llvm/msan
+
+pushd build-llvm/msan
+
 cmake -G "Ninja" \
       -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ \
       -DLLVM_USE_SANITIZER=Memory -DCMAKE_INSTALL_PREFIX=/usr/msan/ \
@@ -56,6 +69,12 @@ cmake -G "Ninja" \
       -DCMAKE_BUILD_TYPE=Release -DLLVM_TARGETS_TO_BUILD="X86" \
        ~/build/llvm_tools/llvm-11.0.0.src
 ninja cxx; ninja install-cxx
+
+popd # go to llvm_tools
+
+popd # go to instrument
+
+popd # go to where build.sh is located
 
 #######################################
 ### Install LLVMgold in bfd-plugins ###
@@ -83,13 +102,7 @@ export CXX=/usr/bin/clang++
 export CC=/usr/bin/clang
 export LLVM_CONFIG=/usr/bin/llvm-config
 
-cd $( dirname "${BASH_SOURCE[0]}" )
-
 pushd afl-2.57b
-make clean all
-popd
-
-pushd afl-2.57b/llvm_mode
 make clean all
 popd
 

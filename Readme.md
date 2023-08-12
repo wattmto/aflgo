@@ -22,7 +22,18 @@ The easiest way to use AFLGo is as patch testing tool in OSS-Fuzz. Here is our i
 
 # How to instrument a Binary with AFLGo
 
-1) Install <a href="https://llvm.org/docs/CMake.html" target="_blank">LLVM</a> **11.0.0** with <a href="http://llvm.org/docs/GoldPlugin.html" target="_blank">Gold</a>-plugin. You can also follow <a href="https://github.com/aflgo/oss-fuzz/blob/master/infra/base-images/base-clang/checkout_build_install_llvm.sh" target="_blank">these</a> instructions. Make sure that the following commands successfully executed:
+You can run [AFLGo building script](./build.sh) to do everything for you instead of manually go through **step 1** to **step 3**. Be careful in these steps we would download, build and install LLVM 11.0.0 from source, which may have unexpected impacts on compiler toolchain in current system.
+
+For **step 4** to **step 8**, we are going to take <a href="http://xmlsoft.org/" target="_blank">libxml2</a> as an example. You can also equivalently run [libxml2 fuzzing script](./scripts/fuzz/libxml2-ef709ce2.sh) instead.
+
+Before we start, make sure that source code tree of AFLGo is ready and we are in its root. Then set the environment variable `AFLGO` to it, which will be used in later steps. For example,
+```bash
+git clone https://github.com/aflgo/aflgo.git
+cd aflgo
+export AFLGO=$PWD
+```
+
+1) Install <a href="https://releases.llvm.org/11.0.0/docs/CMake.html" target="_blank">LLVM</a> **11.0.0** with <a href="http://llvm.org/docs/GoldPlugin.html" target="_blank">Gold</a>-plugin. Then make sure that the following commands successfully executed:
    ```bash
    # Install LLVMgold into bfd-plugins
    mkdir /usr/lib/bfd-plugins
@@ -50,13 +61,9 @@ The easiest way to use AFLGo is as patch testing tool in OSS-Fuzz. Here is our i
    export LLVM_CONFIG=/usr/bin/llvm-config
 
    pushd afl-2.57b; make clean all; popd;
-   pushd afl-2.57b/llvm_mode; make clean all; popd;
    pushd instrument; make clean all; popd;
    pushd distance/distance_calculator; cmake ./; cmake --build ./; popd;
    ```
-   **Note**:
-    - You can run [AFLGo building script](./build.sh) to do everything for you instead of manually go through all before.
-    - From now on, we are going to take <a href="http://xmlsoft.org/" target="_blank">libxml2</a> as an example. You can also equivalently run [libxml2 fuzzing script](./scripts/fuzz/libxml2-ef709ce2.sh) instead.
 
 4) Download subject <a href="http://xmlsoft.org/" target="_blank">libxml2</a>.
    ```bash
