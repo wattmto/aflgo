@@ -47,18 +47,22 @@ export AFLGO=$PWD
    sudo apt-get install python3
    sudo apt-get install python3-dev
    sudo apt-get install python3-pip
+   sudo apt-get install pkg-config
+   sudo apt-get install autoconf
+   sudo apt-get install automake
+   sudo apt-get install libtool-bin
+   sudo apt-get install gawk
    sudo apt-get install libboost-all-dev  # boost is not required if you use gen_distance_orig.sh in step 7
-   sudo pip3 install --upgrade pip
-   sudo pip3 install "networkx<3.0"
-   sudo pip3 install pydot
-   sudo pip3 install pydotplus
+   python3 -m pip install networkx  # May vary by different python versions, see the case statement in build.sh
+   python3 -m pip install pydot
+   python3 -m pip install pydotplus
    ```
 
 3) Compile AFLGo fuzzer, LLVM-instrumentation pass and the distance calculator
    ```bash
-   export CXX=/usr/bin/clang++
-   export CC=/usr/bin/clang
-   export LLVM_CONFIG=/usr/bin/llvm-config
+   export CXX=`which clang++`
+   export CC=`which clang`
+   export LLVM_CONFIG=`which llvm-config`
 
    pushd afl-2.57b; make clean all; popd;
    pushd instrument; make clean all; popd;
