@@ -11,6 +11,25 @@ Unlike AFL, AFLGo spends most of its time budget on reaching specific target loc
 
 AFLGo is based on <a href="http://lcamtuf.coredump.cx/afl/" target="_blank">AFL</a> from Michał Zaleski \<lcamtuf@coredump.cx\>. Checkout the project [awesome-directed-fuzzing](https://github.com/strongcourage/awesome-directed-fuzzing) for related work on directed greybox/whitebox fuzzing.
 
+# Getting Started
+Let's get started with building AFLGo (on Ubuntu 20.04) and fuzz the target libxml2:
+```bash
+git clone https://github.com/aflgo/aflgo.git
+cd aflgo
+export AFLGO=$PWD
+
+# Build AFLGo
+sudo ./build.sh
+
+# When you fuzz for the very first time...
+sudo sh -c 'echo core > /proc/sys/kernel/core_pattern'
+
+# Fuzz the target libxml2
+cd examples
+./libxml2-ef709ce2.sh
+```
+See the detailed steps discussed below.
+
 # Integration into OSS-Fuzz
 The easiest way to use AFLGo is as patch testing tool in OSS-Fuzz. Here is our integration:
 * https://github.com/aflgo/oss-fuzz
