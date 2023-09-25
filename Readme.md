@@ -210,3 +210,9 @@ $AFLGO/afl-2.57b/afl-fuzz -S ef709ce2 -z exp -c 45m -i in -o out $SUBJECT/xmllin
 $AFL/afl-fuzz -M master -i in -o out $MASTER/xmllint --valid --recover @@
 ```
 * Run more [fuzzing scripts](./examples) of various real programs like *Binutils*, *jasper*, *lrzip*, *libming* and *DARPA CGC*. Those scripts haven't contained any dependencies installing steps yet. So it's recommended that see READMEs of those projects first to check their requirements.
+
+## Contributors
+
+<a href="https://github.com/aflgo/aflgo/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=aflgo/aflgo" />
+</a>
