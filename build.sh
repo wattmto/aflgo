@@ -28,6 +28,8 @@ export CC=gcc
 unset CFLAGS
 unset CXXFLAGS
 
+mkdir -p instrument
+
 pushd instrument
 
 mkdir -p llvm_tools
