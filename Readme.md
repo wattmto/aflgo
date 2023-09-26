@@ -43,7 +43,7 @@ The easiest way to use AFLGo is as patch testing tool in OSS-Fuzz. Here is our i
 
 You can run [AFLGo building script](./build.sh) to do everything for you instead of manually go through **step 1** to **step 3**. Be careful in these steps we would download, build and install LLVM 11.0.0 from source, which may have unexpected impacts on compiler toolchain in current system.
 
-For **step 4** to **step 8**, we are going to take <a href="http://xmlsoft.org/" target="_blank">libxml2</a> as an example. You can also equivalently run [libxml2 fuzzing script](./scripts/fuzz/libxml2-ef709ce2.sh) instead.
+For **step 4** to **step 8**, we are going to take <a href="http://xmlsoft.org/" target="_blank">libxml2</a> as an example. You can also equivalently run [libxml2 fuzzing script](./examples/libxml2-ef709ce2.sh) instead.
 
 Before we start, make sure that source code tree of AFLGo is ready and we are in its root. Then set the environment variable `AFLGO` to it, which will be used in later steps. For example,
 ```bash
