@@ -55,6 +55,10 @@ cmake -G "Ninja" \
       -DLLVM_TARGETS_TO_BUILD="X86" \
       -DLLVM_BINUTILS_INCDIR=/usr/include \
       -DLLVM_ENABLE_PROJECTS="clang;compiler-rt" \
+      -DLLVM_BUILD_TESTS=OFF \
+      -DLLVM_INCLUDE_TESTS=OFF \
+      -DLLVM_BUILD_BENCHMARKS=OFF \
+      -DLLVM_INCLUDE_BENCHMARKS=OFF \
       ../llvm
 ninja; ninja install
 
