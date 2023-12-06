@@ -971,7 +971,7 @@ static inline u8 has_new_bits(u8* virgin_map) {
   u64* total_count = (u64*) (trace_bits + MAP_SIZE + 8);
 
   if (*total_count > 0)
-    cur_distance = (double) (*total_distance) / (double) (*total_count);
+    cur_distance = (double) (*total_distance);
   else
     cur_distance = -1.0;
 
@@ -992,7 +992,7 @@ static inline u8 has_new_bits(u8* virgin_map) {
   u32* total_count = (u32*)(trace_bits + MAP_SIZE + 4);
 
   if (*total_count > 0) {
-    cur_distance = (double) (*total_distance) / (double) (*total_count);
+    cur_distance = (double) (*total_distance);
   else
     cur_distance = -1.0;
 
