@@ -2386,7 +2386,9 @@ static u8 run_target(char** argv, u32 timeout) {
      territory. */
 
 #if AFLGO_IMPL
-  memset(trace_bits, 0, MAP_SIZE + 16);
+  memset(trace_bits, 0, MAP_SIZE);
+  memset(trace_bits + MAP_SIZE, 255, 8);
+  memset(trace_bits + MAP_SIZE + 8, 0, 8);
 #else
   memset(trace_bits, 0, MAP_SIZE);
 #endif // AFLGO_IMPL
