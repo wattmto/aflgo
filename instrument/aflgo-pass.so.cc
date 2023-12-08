@@ -473,7 +473,7 @@ bool AFLCoverage::runOnModule(Module &M) {
               }
           }
 
-          if (distance >= 0) ips.push_back(std::make_pair(distance, BB.getFirstInsertionPt()));
+          if (DistanceFile.empty() || distance >= 0) ips.push_back(std::make_pair(distance, BB.getFirstInsertionPt()));
       }
 
       for (auto &IP : ips) {
