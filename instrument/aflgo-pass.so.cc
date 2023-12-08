@@ -468,13 +468,14 @@ bool AFLCoverage::runOnModule(Module &M) {
                           for (it = bb_to_dis.begin(); it != bb_to_dis.end(); ++it)
                               if (it->first.compare(bb_name) == 0)
                                   distance = it->second;
-
                       }
                   }
               }
           }
-          ips.push_back(std::make_pair(distance, BB.getFirstInsertionPt()));
+
+          if (distance >= 0) ips.push_back(std::make_pair(distance, BB.getFirstInsertionPt()));
       }
+
       for (auto &IP : ips) {
         IRBuilder<> IRB(&(*IP.second));
 
