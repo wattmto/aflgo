@@ -468,7 +468,6 @@ bool AFLCoverage::runOnModule(Module &M) {
                           for (it = bb_to_dis.begin(); it != bb_to_dis.end(); ++it)
                               if (it->first.compare(bb_name) == 0)
                                   distance = it->second;
-
                       }
                   }
               }
